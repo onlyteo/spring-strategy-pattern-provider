@@ -1,2 +1,2 @@
-# spring-strategy-pattern-provider
+# Spring Strategy Pattern Provider
 Implementation of strategy pattern with Spring 5
