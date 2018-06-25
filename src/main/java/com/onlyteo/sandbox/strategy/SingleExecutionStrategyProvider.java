@@ -1,17 +1,17 @@
 package com.onlyteo.sandbox.strategy;
 
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import org.springframework.util.Assert;
 
 public abstract class SingleExecutionStrategyProvider<T, U> implements ExecutionStrategyProvider<T, U> {
 
-    private final List<ExecutionStrategy<T, U>> strategies;
+    private final List<? extends ExecutionStrategy<T, U>> executionStrategies;
 
-    protected SingleExecutionStrategyProvider(final List<ExecutionStrategy<T, U>> strategies) {
-        Assert.notEmpty(strategies, "Null or zero strategies applied");
-        this.strategies = strategies;
+    protected SingleExecutionStrategyProvider(final List<? extends ExecutionStrategy<T, U>> executionStrategies) {
+        Assert.notNull(executionStrategies, "Execution strategies are null");
+        this.executionStrategies = executionStrategies;
     }
 
     @Override
@@ -21,13 +21,18 @@ public abstract class SingleExecutionStrategyProvider<T, U> implements Execution
 
     @Override
     public U execute(T input) {
-        Stream<ExecutionStrategy<T, U>> selectedStrategies = strategies.stream().filter(strategy -> strategy.shouldExecute(input));
-        if (selectedStrategies.count() == 0) {
+        validateInput(input);
+
+        List<? extends ExecutionStrategy<T, U>> selectedStrategies = executionStrategies.stream().filter(strategy -> strategy.shouldExecute(input)).collect(Collectors.toList());
+
+        if (selectedStrategies.isEmpty()) {
             zeroStrategiesSelected(input);
         }
-        if (selectedStrategies.count() > 1) {
+
+        if (selectedStrategies.size() > 1) {
             multipleStrategiesSelected(input);
         }
-        return selectedStrategies.findFirst().map(strategy -> strategy.execute(input)).orElse(null);
+
+        return selectedStrategies.stream().findFirst().map(strategy -> strategy.execute(input)).orElse(null);
     }
 }
